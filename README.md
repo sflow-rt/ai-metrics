@@ -2,7 +2,7 @@
 
 Performance metrics for AI/ML RoCEv2 network traffic, for example, large scale CUDA compute tasks using NVIDIA Collective Communication Library (NCCL) operations for inter-GPU communications: AllReduce, Broadcast, Reduce, AllGather, and ReduceScatter.
 
-[https://hub.docker.com/r/sflow/ai-metrics](https://hub.docker.com/r/sflow/ai-metrics)
+[AI Metrics](https://blog.sflow.com/2025/02/ai-metrics.html)
 
 ## To install
 
