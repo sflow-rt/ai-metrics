@@ -1,12 +1,14 @@
 // author: InMon Corp.
-// version: 0.1
-// date: 1/31/2025
+// version: 0.2
+// date: 3/20/2025
 // description: AI Metrics
 // copyright: Copyright (c) 2024-2025 InMon Corp. ALL RIGHTS RESERVED
 
 include(scriptdir() + '/inc/trend.js');
 
 const T = getSystemProperty('ai.flow.t') || 2;
+const F = getSystemProperty('ai.flow.fast') || 0.1;
+const R = getSystemProperty('ai.period.misses') || 4;
 const SYSLOG_HOST = getSystemProperty('ai.syslog.host');
 const SYSLOG_PORT = getSystemProperty('ai.syslog.port') || 514;
 const FACILITY = getSystemProperty('ai.syslog.facility') || 16; // local0
@@ -27,12 +29,18 @@ function sendWarning(msg) {
 var trend = new Trend(300,1);
 var points = {};
 
-baselineCreate('load', 60, 2, 2);
-baselineCreate('period', 20, 2, 1);
+baselineCreate('load',
+  getSystemProperty('ai.load.window') || 20,
+  getSystemProperty('ai.load.sensitivity') || 2,
+  getSystemProperty('ai.load.repeat') || 2);
+baselineCreate('period',
+  getSystemProperty('ai.period.window') || 20,
+  getSystemProperty('ai.period.sensitivity') || 2,
+  getSystemProperty('ai.period.repeat') || 1);
 
 setFlow('ai_bytes_fast', {
   value:'bytes',
-  t:0.1,
+  t:F,
   aggMode:'edge'
 });
 
@@ -149,20 +157,25 @@ setIntervalHandler(function(now) {
   points['top-5-drop-reasons'] = calculateTopN('TOPOLOGY','ai_drop_reasons',5,0.0001,0,1);
 
   res = baselineStatistics('period');
-  points['period'] = res ? res.mean / 1000 : 0;
+  var periodMs = res && res.mean || 0;
+  points['period'] = periodMs / 1000;
 
   trend.addPoints(now,points);
 
-  var status = baselineCheck('load', points.bps);
+  res = activeFlows('EDGE','ai_bytes_fast',1)[0] || {};
+  var status = baselineCheck('load', res.value || 0);
   switch(status) {
     case 'learning':
       break;
     case 'normal':
       let stats = baselineStatistics('load');
-      if(load_threshold == 0 || load_threshold < stats.min || load_threshold > stats.max) {
+      if(load_threshold == 0
+        || load_threshold < stats.min
+        || load_threshold > stats.max
+        || (load_prev_time > 0 && Math.max(now - load_prev_time, 0) > periodMs * R)) {
         load_threshold = stats.mean;
         load_prev_time = 0;
-        setThreshold('ai_bytes_fast', {metric:'ai_bytes_fast', timeout:0.2, value: load_threshold / 8});
+        setThreshold('ai_bytes_fast', {metric:'ai_bytes_fast', timeout:0.2, value: load_threshold});
       }
       break;
     case 'high':
