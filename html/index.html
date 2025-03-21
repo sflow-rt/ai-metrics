@@ -179,10 +179,20 @@
         <p>See <a href="https://sflow-rt.com/reference.php#properties">System Properties</a> for information on configuring startup settings.</p>
         <div class="table-responsive-xl">
           <table class="table table-striped table-bordered table-sm">
-            <thead class="thead-light"><tr><th>Property</th><th>Default</th><th>Description</th></tr><thead>
+            <thead class="thead-light"><tr><th>Property</th><th>Default</th><th>Description</th></tr></thead>
             <tbody>
-              <tr><td>ai.flow.t</td><td>15</td><td>Flow smoothing (in seconds)</td></tr>
-              <tr><td>ai.flow.n</td><td>20</td><td>Number of large flows per data source</td></tr>
+              <tr><td>ai.flow.t</td><td>2</td><td>Flow smoothing (in seconds)</td></tr>
+              <tr><td>ai.flow.fast</td><td>0.1</td><td>Fast smoothing (in seconds) to detect period</td></tr>
+              <tr><td>ai.threshold.t</td><td>0.2</td><td>Threshold hysteresis (in seconds) to detect period</td></tr>
+              <tr><td>ai.load.window</td><td>20</td><td>Window (in seconds) to compute threshold</td></tr>
+              <tr><td>ai.load.sensitivity</td><td>2</td><td>Multiple of standard deviation used to identify outliers</td></tr>
+              <tr><td>ai.load.repeat</td><td>2</td><td>Number of sequential data points that must exceed the standard deviation threshold before flagging anomaly</td></tr>
+              <tr><td>ai.period.window</td><td>20</td><td>Window (in seconds) to compute period</td></tr>
+              <tr><td>ai.period.sensitivity</td><td>2</td><td>Multiple of standard deviation used to identify outliers</td></tr>
+              <tr><td>ai.period.repeat</td><td>1</td><td>Number of sequential data points that must exceed the standard deviation threshold before flagging anomaly</td></tr>
+              <tr><td>ai.period.misses</td><td>4</td><td>Number of missed cycles before resetting threshold</td></tr>
+              <tr><td>ai.period.stale</td><td>10</td><td>Number of missed cycles before measured period is deemed invalid</td></tr>
+              <tr><td>ai.period.cv</td><td>0.5</td><td>Coefficient of variation (mean/sdev) limit for valid period</td></tr>
               <tr><td>ai.syslog.host</td><td></td><td>Syslog collector address</td></tr>
               <tr><td>ai.syslog.port</td><td>514</td><td>Syslog UDP port</td></tr>
               <tr><td>ai.syslog.facility</td><td>16</td><td>Syslog facility number, e.g. 16 = local0</td></tr>

@@ -1,14 +1,23 @@
 // author: InMon Corp.
-// version: 0.2
-// date: 3/20/2025
+// version: 0.3
+// date: 3/21/2025
 // description: AI Metrics
 // copyright: Copyright (c) 2024-2025 InMon Corp. ALL RIGHTS RESERVED
 
 include(scriptdir() + '/inc/trend.js');
 
 const T = getSystemProperty('ai.flow.t') || 2;
-const F = getSystemProperty('ai.flow.fast') || 0.1;
-const R = getSystemProperty('ai.period.misses') || 4;
+const FAST_T = getSystemProperty('ai.flow.fast') || 0.1;
+const THRESHOLD_T = getSystemProperty('ai.threshold.t') || 0.2;
+const LOAD_WINDOW = getSystemProperty('ai.load.window') || 20;
+const LOAD_SENSITIVITY = getSystemProperty('ai.load.sensitivity') || 2;
+const LOAD_REPEAT = getSystemProperty('ai.load.repeat') || 2;
+const PERIOD_WINDOW = getSystemProperty('ai.period.window') || 20;
+const PERIOD_SENSITIVITY = getSystemProperty('ai.period.sensitivity') || 2;
+const PERIOD_REPEAT = getSystemProperty('ai.period.repeat') || 1;
+const PERIOD_MISSES = getSystemProperty('ai.period.misses') || 4;
+const PERIOD_STALE = getSystemProperty('ai.period.stale') || 10;
+const PERIOD_CV = getSystemProperty('ai.period.cv') || 0.5;
 const SYSLOG_HOST = getSystemProperty('ai.syslog.host');
 const SYSLOG_PORT = getSystemProperty('ai.syslog.port') || 514;
 const FACILITY = getSystemProperty('ai.syslog.facility') || 16; // local0
@@ -29,18 +38,12 @@ function sendWarning(msg) {
 var trend = new Trend(300,1);
 var points = {};
 
-baselineCreate('load',
-  getSystemProperty('ai.load.window') || 20,
-  getSystemProperty('ai.load.sensitivity') || 2,
-  getSystemProperty('ai.load.repeat') || 2);
-baselineCreate('period',
-  getSystemProperty('ai.period.window') || 20,
-  getSystemProperty('ai.period.sensitivity') || 2,
-  getSystemProperty('ai.period.repeat') || 1);
+baselineCreate('load',LOAD_WINDOW,LOAD_SENSITIVITY,LOAD_REPEAT);
+baselineCreate('period',PERIOD_WINDOW,PERIOD_SENSITIVITY,PERIOD_REPEAT);
 
 setFlow('ai_bytes_fast', {
   value:'bytes',
-  t:F,
+  t:FAST_T,
   aggMode:'edge'
 });
 
@@ -66,7 +69,7 @@ setFlow('ai_cnp', {
 // RDMA
 setFlow('ai_rdma_ops', {
   value: 'frames',
-  values: ['ibbtrdmalen'],
+  values: ['avg:ibbtrdmalen'],
   t: T,
   aggMode:'edge'
 });
@@ -114,7 +117,6 @@ function calculateTopN(agents,metric,n,minVal,total,scale) {
   return topN;
 }
 
-
 var load_threshold = 0;
 var load_prev_time = 0;
 setIntervalHandler(function(now) {
@@ -123,7 +125,7 @@ setIntervalHandler(function(now) {
 
   res = activeFlows('EDGE','ai_rdma_ops',1)[0] || {};
   points['rdma_ops'] = res.value || 0;
-  points['rdma_bytes'] = (res.values && res.values[0] || 0) / (res.value || 1);
+  points['rdma_bytes'] = res.values && res.values[0] || 0;
 
   res = activeFlows('EDGE','ai_credits',1)[0] || {};
   points['aeth_credits_avg'] = res.value || 0;
@@ -158,7 +160,7 @@ setIntervalHandler(function(now) {
 
   res = baselineStatistics('period');
   var periodMs = res && res.mean || 0;
-  points['period'] = periodMs / 1000;
+  points['period'] = (res && res.sdev / res.mean < PERIOD_CV && now - load_prev_time < res.mean * PERIOD_STALE && res.mean || 0) / 1000;
 
   trend.addPoints(now,points);
 
@@ -172,10 +174,10 @@ setIntervalHandler(function(now) {
       if(load_threshold == 0
         || load_threshold < stats.min
         || load_threshold > stats.max
-        || (load_prev_time > 0 && Math.max(now - load_prev_time, 0) > periodMs * R)) {
+        || (load_prev_time > 0 && periodMs && now - load_prev_time > periodMs * PERIOD_MISSES)) {
         load_threshold = stats.mean;
         load_prev_time = 0;
-        setThreshold('ai_bytes_fast', {metric:'ai_bytes_fast', timeout:0.2, value: load_threshold});
+        setThreshold('ai_bytes_fast', {metric:'ai_bytes_fast', timeout:THRESHOLD_T, value: load_threshold});
       }
       break;
     case 'high':
