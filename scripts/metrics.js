@@ -1,6 +1,6 @@
 // author: InMon Corp.
-// version: 0.3
-// date: 3/21/2025
+// version: 0.4
+// date: 4/10/2025
 // description: AI Metrics
 // copyright: Copyright (c) 2024-2025 InMon Corp. ALL RIGHTS RESERVED
 
@@ -200,10 +200,18 @@ setEventHandler(function(evt) {
 
 const prometheus_prefix = (getSystemProperty('prometheus.metric.prefix') || 'sflow_') + 'ai_';
 
+function promTopN(topn,metricName,keyName) {
+  if(!topn) return '';
+  return Object.keys(topn).reduce((acc,key) => acc + prometheus_prefix+metricName+'{'+keyName+'="'+key+'"} ' + (topn[key] || 0) + '\n','');
+}
+
 function prometheus() {
-  return Object.keys(points)
+  result = Object.keys(points)
     .filter((key) => typeof points[key] == 'number')
     .reduce((acc,key) => acc + prometheus_prefix+key+' ' + (points[key] || 0) + '\n','');
+  result += promTopN(points['top-5-operations'],'operations','name');
+  result += promTopN(points['top-5-drop-reasons'],'drops','reason');
+  return result;
 }
 
 setHttpHandler(function(req) {
