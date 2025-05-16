@@ -1,6 +1,6 @@
 // author: InMon Corp.
-// version: 0.4
-// date: 4/10/2025
+// version: 0.5
+// date: 5/16/2025
 // description: AI Metrics
 // copyright: Copyright (c) 2024-2025 InMon Corp. ALL RIGHTS RESERVED
 
@@ -41,10 +41,11 @@ var points = {};
 baselineCreate('load',LOAD_WINDOW,LOAD_SENSITIVITY,LOAD_REPEAT);
 baselineCreate('period',PERIOD_WINDOW,PERIOD_SENSITIVITY,PERIOD_REPEAT);
 
-setFlow('ai_bytes_fast', {
-  value:'bytes',
+setFlow('ai_frames_fast', {
+  value:'frames',
   t:FAST_T,
-  aggMode:'edge'
+  aggMode:'edge',
+  filter:'suffix:stack:.:1=ibbt'
 });
 
 setFlow('ai_bytes', {
@@ -164,7 +165,7 @@ setIntervalHandler(function(now) {
 
   trend.addPoints(now,points);
 
-  res = activeFlows('EDGE','ai_bytes_fast',1)[0] || {};
+  res = activeFlows('EDGE','ai_frames_fast',1)[0] || {};
   var status = baselineCheck('load', res.value || 0);
   switch(status) {
     case 'learning':
@@ -177,12 +178,12 @@ setIntervalHandler(function(now) {
         || (load_prev_time > 0 && periodMs && now - load_prev_time > periodMs * PERIOD_MISSES)) {
         load_threshold = stats.mean;
         load_prev_time = 0;
-        setThreshold('ai_bytes_fast', {metric:'ai_bytes_fast', timeout:THRESHOLD_T, value: load_threshold});
+        setThreshold('ai_frames_fast', {metric:'ai_frames_fast', timeout:THRESHOLD_T, value: load_threshold});
       }
       break;
     case 'high':
     case 'low':
-      clearThreshold('ai_bytes_fast');
+      clearThreshold('ai_frames_fast');
       load_threshold = 0;
       baselineReset('load');
       break;
@@ -196,7 +197,7 @@ setEventHandler(function(evt) {
   }
   baselineCheck('period',evt.timestamp - load_prev_time);
   load_prev_time = evt.timestamp;
-}, ['ai_bytes_fast']);
+}, ['ai_frames_fast']);
 
 const prometheus_prefix = (getSystemProperty('prometheus.metric.prefix') || 'sflow_') + 'ai_';
 
