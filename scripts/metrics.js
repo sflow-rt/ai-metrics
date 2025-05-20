@@ -1,6 +1,6 @@
 // author: InMon Corp.
 // version: 0.5
-// date: 5/16/2025
+// date: 5/19/2025
 // description: AI Metrics
 // copyright: Copyright (c) 2024-2025 InMon Corp. ALL RIGHTS RESERVED
 
@@ -47,6 +47,13 @@ setFlow('ai_frames_fast', {
   aggMode:'edge',
   filter:'suffix:stack:.:1=ibbt'
 });
+
+setFlow('ai_frames', {
+  value:'frames',
+  t:T,
+  aggMode:'edge',
+  filter:'suffix:stack:.:1=ibbt'
+}); 
 
 setFlow('ai_bytes', {
   value:'bytes',
@@ -165,7 +172,7 @@ setIntervalHandler(function(now) {
 
   trend.addPoints(now,points);
 
-  res = activeFlows('EDGE','ai_frames_fast',1)[0] || {};
+  res = activeFlows('EDGE','ai_frames',1)[0] || {};
   var status = baselineCheck('load', res.value || 0);
   switch(status) {
     case 'learning':
@@ -235,6 +242,15 @@ setHttpHandler(function(req) {
         if(points.hasOwnProperty(path[1])) result = points[path[1]];
         else throw 'not_found';
       }
+      break;
+    case 'period':
+      if(path.length > 1) throw 'not_found';
+      result = {};
+      result.value = (activeFlows('EDGE','ai_frames_fast',1)[0] || {}).value || 0;
+      result.period = points['period'] || 0;
+      result.threshold = load_threshold;
+      result.baselineLoad = baselineStatistics('load') || {};
+      result.baselinePeriod = baselineStatistics('period') || {};
       break;
     default: throw 'not_found';
   }

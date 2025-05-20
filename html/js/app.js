@@ -1,6 +1,7 @@
 $(function() {
   var restPath = '../scripts/metrics.js/';
   var trendURL = restPath + 'trend/json';
+  var periodURL = restPath + 'period/json';
   var SEP = '_SEP_';
 
   function setNav(target) {
@@ -121,6 +122,71 @@ $(function() {
      metric: 'top-5-drop-reasons',
      units: ['Packets per Seconds']},
   db);
+
+  var fastTrend;
+  var fastTrendData;
+  var fastTrendSeries = 3;
+  var fastTrendPoints = 300;
+  var fastPollInterval = 100;
+  function resetFastTrend() {
+    fastTrendData = {times:[], values: [], units:'Packets per Second', legend:{labels:['Value','Threshold','Average']}};
+    var i, t = Date.now();
+    for(i = 0; i < fastTrendPoints; i++) {
+      t = t - fastPollInterval;
+      fastTrendData.times.unshift(t);
+    }
+    for(var n = 0; n < fastTrendSeries; n++) {
+      var series = new Array(fastTrendData.times.length);
+      for(i = 0; i < fastTrendData.times.length; i++) series[i] = 0;
+      fastTrendData.values.push(series);
+    }  
+  }
+  function updateFastTrend(data) {
+    if(!data) return;
+    if(!fastTrendData) resetFastTrend();
+    var now = Date.now();
+    fastTrendData.times.push(now);
+    var tmin = now - (fastTrendPoints * 1.04 * fastPollInterval);
+    var nshift = 0;
+    while(fastTrendData.times.length >= fastTrendPoints || fastTrendData.times[0] < tmin) {
+      fastTrendData.times.shift();
+      nshift++;
+    }
+    var vals = [data.value,data.threshold,data.baselineLoad.mean || 0];
+    for(var n = 0; n < fastTrendSeries; n++) {
+      var series = fastTrendData.values[n];
+      series.push(vals[n]);
+      for(var i = 0; i < nshift; i++) {
+        series.shift();
+      }
+    }
+    fastTrend.stripchart('draw', fastTrendData);
+  }
+  var timeout;
+  function fastPoll() {
+    $.ajax({
+      url: periodURL,
+      dataType: 'json',
+      success: function(data) {
+        updateFastTrend(data);
+      },
+      complete: function(result,status,errorThrown) {
+        timeout = setTimeout(fastPoll,fastPollInterval);
+      },
+      timeout: 1000
+    });
+  }
+  $('#periodicity').click(function() {
+     $('#period-dialog').modal('show');
+  });
+  $('#period-dialog').on('shown.bs.modal', function() {
+    fastTrend = $('#fast-load').stripchart();
+    fastPoll();
+  }).on('hide.bs.modal', function() {
+    clearTimeout(timeout);
+    fastTrend.stripchart('destroy');
+    fastTrendData = null;
+  });
 
   function updateData(data) {
     if(!data 
