@@ -60,8 +60,8 @@ $(function() {
      type: 'trend',
      stack: false,
      includeOther: false,
-     metrics: ['ecn_pps','cnp_pps'],
-     legend: ['ECN','CNP'],
+     metrics: ['ecn_pps','cnp_pps','trim_pps'],
+     legend: ['ECN','CNP','Trimmed'],
      units: 'Packets per Second'},
   db);
   $('#rdmaoperations').chart({

@@ -1,6 +1,6 @@
 // author: InMon Corp.
-// version: 0.5
-// date: 5/19/2025
+// version: 0.6
+// date: 9/11/2025
 // description: AI Metrics
 // copyright: Copyright (c) 2024-2025 InMon Corp. ALL RIGHTS RESERVED
 
@@ -22,6 +22,7 @@ const SYSLOG_HOST = getSystemProperty('ai.syslog.host');
 const SYSLOG_PORT = getSystemProperty('ai.syslog.port') || 514;
 const FACILITY = getSystemProperty('ai.syslog.facility') || 16; // local0
 const SEVERITY = getSystemProperty('ai.syslog.severity') || 5;  // notice
+const TRIMDSCP = getSystemProperty('ai.trim.dscp') || 11;
 
 const SEP = '_SEP_';
 
@@ -71,6 +72,12 @@ setFlow('ai_ecn', {
 setFlow('ai_cnp', {
   value:'frames',
   filter:'ibbtopcode=129&ibbtse=false&ibbtm=false&direction=ingress',
+  t:T
+});
+
+setFlow('ai_trim', {
+  value:'frames',
+  filter:'ipdscp='+TRIMDSCP+'|ip6dscp='+TRIMDSCP,
   t:T
 });
 
@@ -156,13 +163,14 @@ setIntervalHandler(function(now) {
 
   points['top-5-operations'] = calculateTopN('EDGE','ai_operation',5,1,0,1);
 
-  res = metric('TOPOLOGY','sum:ifindiscards,sum:ifinerrors,sum:ifoutdiscards,sum:ifouterrors,sum:ai_ecn,sum:ai_cnp');
+  res = metric('TOPOLOGY','sum:ifindiscards,sum:ifinerrors,sum:ifoutdiscards,sum:ifouterrors,sum:ai_ecn,sum:ai_cnp,sum:ai_trim');
   points['discards_in'] = getMetric(res,0,0);
   points['errors_in'] = getMetric(res,1,0);
   points['discards_out'] = getMetric(res,2,0);
   points['errors_out'] = getMetric(res,3,0);
   points['ecn_pps'] = getMetric(res,4,0);
   points['cnp_pps'] = getMetric(res,5,0);
+  points['trim_pps'] = getMetric(res,6,0);
 
   points['top-5-drop-reasons'] = calculateTopN('TOPOLOGY','ai_drop_reasons',5,0.0001,0,1);
 

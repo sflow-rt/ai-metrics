@@ -179,7 +179,7 @@
           <li><strong>RDMA Bytes</strong> Average RDMA operation size</li>
           <li><strong>Credits</strong> Average number of credits in RoCEv2 acknowledgements</li>
           <li><strong>Period</strong> Detected period of compute / exchange activity on fabric</li>
-          <li><strong>Congestion</strong> Total ECN / CNP congestion messages</li>
+          <li><strong>Congestion</strong> Total ECN / CNP / trimmed packet congestion messages</li>
           <li><strong>Errors</strong> Total ingress / egress errors</li>
           <li><strong>Discards</strong> Total ingress / egress discards</li>
           <li><strong>Drop Reasons</strong> Packet drop reasons</li>
@@ -217,6 +217,7 @@
               <tr><td>ai.syslog.port</td><td>514</td><td>Syslog UDP port</td></tr>
               <tr><td>ai.syslog.facility</td><td>16</td><td>Syslog facility number, e.g. 16 = local0</td></tr>
               <tr><td>ai.syslog.severity</td><td>5</td><td>Syslog notice number, e.g. 5 = notice</td></tr>
+              <tr><td>ai.trim.dscp</td><td>11</td><td>Trimmed packet DSCP value, set to -1 to disable</td></tr>
             </tbody>
           </table>
         </div>
