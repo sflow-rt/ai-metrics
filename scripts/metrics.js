@@ -1,8 +1,8 @@
 // author: InMon Corp.
 // version: 0.6
-// date: 9/11/2025
+// date: 1/13/2026
 // description: AI Metrics
-// copyright: Copyright (c) 2024-2025 InMon Corp. ALL RIGHTS RESERVED
+// copyright: Copyright (c) 2024-2026 InMon Corp. ALL RIGHTS RESERVED
 
 include(scriptdir() + '/inc/trend.js');
 
@@ -14,7 +14,7 @@ const LOAD_SENSITIVITY = getSystemProperty('ai.load.sensitivity') || 2;
 const LOAD_REPEAT = getSystemProperty('ai.load.repeat') || 2;
 const PERIOD_WINDOW = getSystemProperty('ai.period.window') || 20;
 const PERIOD_SENSITIVITY = getSystemProperty('ai.period.sensitivity') || 2;
-const PERIOD_REPEAT = getSystemProperty('ai.period.repeat') || 1;
+const PERIOD_REPEAT = getSystemProperty('ai.period.repeat') || 2;
 const PERIOD_MISSES = getSystemProperty('ai.period.misses') || 4;
 const PERIOD_STALE = getSystemProperty('ai.period.stale') || 10;
 const PERIOD_CV = getSystemProperty('ai.period.cv') || 0.5;
