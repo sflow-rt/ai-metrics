@@ -215,16 +215,19 @@ setEventHandler(function(evt) {
 }, ['ai_frames_fast']);
 
 const prometheus_prefix = (getSystemProperty('prometheus.metric.prefix') || 'sflow_') + 'ai_';
+const prometheus_type = getSystemProperty("prometheus.type") === 'yes';
 
 function promTopN(topn,metricName,keyName) {
   if(!topn) return '';
-  return Object.keys(topn).reduce((acc,key) => acc + prometheus_prefix+metricName+'{'+keyName+'="'+key+'"} ' + (topn[key] || 0) + '\n','');
+  var keys = Object.keys(topn);
+  if(!keys.length) return '';
+  return keys.reduce((acc,key) => acc + prometheus_prefix+metricName+'{'+keyName+'="'+key+'"} ' + (topn[key] || 0) + '\n', prometheus_type ? '# TYPE '+prometheus_prefix+metricName+' gauge\n' : '');
 }
 
 function prometheus() {
   result = Object.keys(points)
     .filter((key) => typeof points[key] == 'number')
-    .reduce((acc,key) => acc + prometheus_prefix+key+' ' + (points[key] || 0) + '\n','');
+    .reduce((acc,key) => acc + (prometheus_type ? '# TYPE '+prometheus_prefix+key+' gauge\n' : '') + prometheus_prefix+key+' ' + (points[key] || 0) + '\n','');
   result += promTopN(points['top-5-operations'],'operations','name');
   result += promTopN(points['top-5-drop-reasons'],'drops','reason');
   return result;
