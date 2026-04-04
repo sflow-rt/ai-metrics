@@ -11,5 +11,5 @@ Performance metrics for AI/ML RoCEv2 network traffic, for example, large scale C
 4. Run command: `sflow-rt/get-app.sh sflow-rt ai-metrics`
 5. Restart sFlow-RT
 
-For more information, visit:
+For documentation, tutorials, and community support, visit:
 https://sFlow-RT.com
