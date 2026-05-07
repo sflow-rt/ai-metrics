@@ -69,7 +69,7 @@ $(function() {
      stack: true,
      includeOther: false,
      metrics: ['rdma_ops'],
-     units: ['Operations per Seconds']},
+     units: ['Operations per Second']},
   db);
   $('#rdmabytes').chart({
      type: 'trend',
@@ -90,7 +90,7 @@ $(function() {
      stack: true,
      includeOther: false,
      metric: 'top-5-operations',
-     units: ['Packets per Seconds']},
+     units: ['Packets per Second']},
   db);
   $('#period').chart({
     type: 'trend',
@@ -120,7 +120,7 @@ $(function() {
      stack: true,
      includeOther: false,
      metric: 'top-5-drop-reasons',
-     units: ['Packets per Seconds']},
+     units: ['Packets per Second']},
   db);
 
   var fastTrend;
